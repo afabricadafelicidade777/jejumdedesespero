@@ -1,0 +1,23 @@
+{
+  "name": "jejum-de-desespero",
+  "version": "1.0.0",
+  "description": "Jejum de Desespero - 7 dias a alimentar a confiança",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afabricadafelicidade777/jejumdedesespero.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/afabricadafelicidade777/jejumdedesespero/issues"
+  },
+  "homepage": "https://github.com/afabricadafelicidade777/jejumdedesespero#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
