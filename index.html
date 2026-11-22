@@ -363,20 +363,46 @@ document.getElementById("exportJournalBtn")?.addEventListener("click",exportJour
  });
 })();
 
-// Progressive Web App install button: native prompt when supported, helpful steps otherwise.
+// Progressive Web App install button. Native prompt when supported; manual fallback otherwise.
 (function(){
  let deferredPrompt=null;
- const buttons=[document.getElementById('installButton'),document.getElementById('installBeforeRegister')].filter(Boolean), status=document.getElementById('installStatus'), gateStatus=document.getElementById('installGateStatus');
- const androidHelp=document.getElementById('androidHelp'), iosHelp=document.getElementById('iosHelp');
- const ua=navigator.userAgent||''; const isIOS=/iphone|ipad|ipod/i.test(ua);
- window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredPrompt=event;button.textContent='📲 Instalar aplicação';status.textContent='A instalação está disponível. Toca no botão para adicionar ao ecrã principal.';});
- window.addEventListener('appinstalled',()=>{if(status)status.textContent='Aplicação instalada com sucesso! Já podes abrir pelo ícone no teu ecrã. ❤️';if(gateStatus)gateStatus.textContent='Instalação concluída! ❤️';deferredPrompt=null;buttons.forEach(b=>{b.textContent='✓ Aplicação instalada';b.disabled=true;});});
+ const buttons=[document.getElementById('installButton'),document.getElementById('installBeforeRegister')].filter(Boolean);
+ const status=document.getElementById('installStatus');
+ const gateStatus=document.getElementById('installGateStatus');
+ const androidHelp=document.getElementById('androidHelp');
+ const iosHelp=document.getElementById('iosHelp');
+ const ua=navigator.userAgent||'';
+ const isIOS=/iphone|ipad|ipod/i.test(ua);
+ const isAndroid=/android/i.test(ua);
+ const isInstalled=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+ function setStatus(message){if(status)status.textContent=message;if(gateStatus)gateStatus.textContent=message;}
+ function showManualHelp(){
+   if(isIOS){if(iosHelp){iosHelp.classList.add('show');iosHelp.open=true;}if(androidHelp)androidHelp.classList.remove('show');setStatus('No iPhone: abre esta página no Safari, toca em Partilhar e escolhe “Adicionar ao ecrã principal”.');}
+   else if(isAndroid){if(androidHelp){androidHelp.classList.add('show');androidHelp.open=true;}if(iosHelp)iosHelp.classList.remove('show');setStatus('No Android: abre esta página no Chrome. Se não surgir a instalação automática, toca nos ⋮ e escolhe “Instalar aplicação” ou “Adicionar ao ecrã principal”.');}
+   else {if(androidHelp){androidHelp.classList.add('show');androidHelp.open=true;}if(iosHelp){iosHelp.classList.add('show');iosHelp.open=true;}setStatus('A instalação depende do navegador e do dispositivo. Consulta as instruções Android ou iPhone abaixo.');}
+ }
+ if(isInstalled){setStatus('Esta aplicação parece já estar instalada no teu dispositivo. ❤️');buttons.forEach(b=>{b.textContent='✓ Aplicação instalada';b.disabled=true;});}
+ window.addEventListener('beforeinstallprompt',event=>{
+   event.preventDefault();deferredPrompt=event;
+   buttons.forEach(button=>button.textContent='📲 Instalar aplicação');
+   setStatus('A instalação automática está disponível. Toca no botão para instalar.');
+ });
+ window.addEventListener('appinstalled',()=>{
+   setStatus('Aplicação instalada com sucesso! Já podes abrir pelo ícone no teu ecrã. ❤️');
+   deferredPrompt=null;buttons.forEach(b=>{b.textContent='✓ Aplicação instalada';b.disabled=true;});
+ });
  buttons.forEach(button=>button.addEventListener('click',async()=>{
-  if(deferredPrompt){deferredPrompt.prompt();const choice=await deferredPrompt.userChoice;const msg=choice&&choice.outcome==='accepted'?'A instalação foi iniciada. ❤️':'Podes instalar quando quiseres; deixamos as instruções disponíveis.';if(status)status.textContent=msg;if(gateStatus)gateStatus.textContent=msg;deferredPrompt=null;return;}
-  if(isIOS){if(iosHelp){iosHelp.classList.add('show');iosHelp.open=true;}if(androidHelp)androidHelp.classList.remove('show');const msg='No iPhone: abre esta página no Safari, toca em Partilhar e escolhe “Adicionar ao ecrã principal”.';if(status)status.textContent=msg;if(gateStatus)gateStatus.textContent=msg;alert(msg);}
-  else {if(androidHelp){androidHelp.classList.add('show');androidHelp.open=true;}if(iosHelp)iosHelp.classList.remove('show');const msg='No Android: abre esta página no Chrome, toca nos ⋮ e escolhe “Instalar aplicação” ou “Adicionar ao ecrã principal”.';if(status)status.textContent=msg;if(gateStatus)gateStatus.textContent=msg;alert(msg);}
+   if(isInstalled){setStatus('A aplicação já está instalada no teu dispositivo. ❤️');return;}
+   if(deferredPrompt){
+     try{await deferredPrompt.prompt();const choice=await deferredPrompt.userChoice;setStatus(choice&&choice.outcome==='accepted'?'Pedido de instalação aceite. Segue os passos apresentados pelo navegador. ❤️':'Podes instalar quando quiseres; as instruções ficam disponíveis abaixo.');}
+     catch(e){showManualHelp();}
+     deferredPrompt=null;return;
+   }
+   showManualHelp();
  }));
- if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
+ if('serviceWorker' in navigator && location.protocol==='https:'){
+   window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(err=>console.warn('Service worker não registado:',err)));
+ }
 })();
 
 render();
