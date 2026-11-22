@@ -1,0 +1,28 @@
+JEJUM DE DESESPERO — CORREÇÃO INSTALAÇÃO + INSCRIÇÕES
+
+1. PUBLICAÇÃO: todos os ficheiros e pastas deste ZIP devem ficar NA RAIZ do repositório ligado à Vercel.
+   IMPORTANTE: a pasta api/inscricao.js é necessária para o envio dos emails.
+   A Vercel deve estar configurada como projeto estático/Other e Root Directory na raiz.
+
+2. EMAIL: vai à Vercel > projeto > Settings > Environment Variables e adiciona:
+   RESEND_API_KEY = chave API criada no Resend (nunca no index.html nem no GitHub)
+   MAIL_FROM = Jejum de Desespero <inscricoes@afabricadafelicidade.com>
+   MAIL_TO = info@afabricadafelicidade.com
+   O endereço de MAIL_FROM só funciona depois de afabricadafelicidade.com estar VERIFICADO no Resend.
+   Faz Redeploy após inserir as variáveis. Se o domínio não estiver validado, o email não será entregue.
+   A resposta HTTP 200 confirma aceitação pelo Resend, NÃO garante entrega na caixa de entrada.
+   NOTA: o endereço correto neste projeto é info@afabricadafelicidade.com (com n).
+
+3. TESTAR: preencher formulário em janela anónima e verificar se mostra 'Inscrição confirmada'.
+   Se aparecer erro, verificar Vercel > Logs e Resend > Emails.
+   Verificar Spam e regras da caixa info@afabricadafelicidade.com.
+
+4. INSTALAR: abrir o endereço https://...vercel.app da PUBLICAÇÃO no Android com Chrome (não em pré-visualizadores do WhatsApp/Instagram).
+   Menu ⋮ > Instalar aplicação ou Adicionar ao ecrã principal. Alguns dispositivos não mostram pedido automático.
+   iPhone: Safari > Partilhar > Adicionar ao ecrã principal.
+   O ecrã de instalação do Chrome é controlado pelo navegador, não pela aplicação.
+   PWA: manifest.webmanifest, sw.js, icons e HTTPS necessários.
+   Em dispositivos com versão anterior, remover atalho antigo, fechar separadores e recarregar site.
+
+5. PRIVACIDADE: os dados dos formulários vão para o Resend e para a conta de email da organização.
+   O progresso e diário continuam guardados apenas no navegador local. Validar política de privacidade e prazo de retenção antes do lançamento.

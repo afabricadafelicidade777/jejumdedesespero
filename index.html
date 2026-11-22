@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#173c32">
 <link rel="manifest" href="/manifest.webmanifest">
+<meta name="application-name" content="Jejum de Desespero">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -132,6 +134,7 @@ p{line-height:1.65}
     <p style="font-size:18px;color:#31543d;font-weight:700">7 dias a alimentar a confiança</p>
     <p>Uma experiência de consciência, palavra e transformação interior. Inscreve-te para acederes à jornada e receberes as novidades importantes.</p>
     <form id="registrationForm">
+      <input type="text" name="website" id="regWebsite" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px" />
       <label class="reg-field"><label for="regName">Nome</label><input id="regName" name="name" autocomplete="name" required maxlength="120" placeholder="O teu nome" /></label>
       <label class="reg-field"><label for="regEmail">Email</label><input id="regEmail" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="nome@email.com" /></label>
       <label class="reg-field"><label for="regPhone">Número de telemóvel</label><input id="regPhone" name="phone" type="tel" autocomplete="tel" required maxlength="30" placeholder="+351 9xx xxx xxx" /></label>
@@ -139,7 +142,11 @@ p{line-height:1.65}
       <button class="reg-submit" id="regSubmit" type="submit">QUERO INICIAR A MINHA JORNADA</button>
       <div id="regStatus" role="status" aria-live="polite"></div>
     </form>
-    <p style="font-size:12px;margin-top:18px">Os dados são enviados para a organização da Jornada. O envio do formulário utiliza um serviço externo de formulários.</p>
+    <div style="margin-top:20px;padding:16px;border-radius:16px;background:#edf2ed;text-align:center">
+      <button id="installBeforeRegister" type="button" class="reg-submit">INSTALAR NO TELEMÓVEL</button>
+      <p id="installGateStatus" style="font-size:13px;margin:10px 0 0">Android: Chrome → menu ⋮ → Instalar aplicação. iPhone: Safari → Partilhar → Adicionar ao ecrã principal.</p>
+    </div>
+    <p style="font-size:12px;margin-top:18px">Os dados são enviados para a organização da Jornada. O formulário envia os dados de inscrição através de um serviço de email configurado pela organização.</p>
   </div>
 </section>
 <div class="wrap" id="appWrap">
@@ -341,25 +348,25 @@ if(finalField){
   });
 }
 document.getElementById("exportJournalBtn")?.addEventListener("click",exportJournal);
-// Registration form: submission through FormSubmit AJAX (first use requires inbox activation).
+// Send registration through our own secure Vercel endpoint (Resend API key stays server-side).
 (function(){
  const gate=document.getElementById('registrationGate'), app=document.getElementById('appWrap'), form=document.getElementById('registrationForm');
- const regKey='jejum_registration_v1';
+ const regKey='jejum_registration_v2';
  try { if(localStorage.getItem(regKey)){gate.style.display='none';app.style.display='block';} } catch(e){}
  form.addEventListener('submit',async function(ev){
   ev.preventDefault();
   if(!form.reportValidity()) return;
   const status=document.getElementById('regStatus'), btn=document.getElementById('regSubmit');
-  btn.disabled=true; status.textContent='A enviar a tua inscrição…';
-  const payload={name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),phone:document.getElementById('regPhone').value.trim(),_subject:'Inscrição Jornada do Desespero',_captcha:'false',_template:'table'};
+  btn.disabled=true; status.textContent='A confirmar a inscrição…';
+  const payload={name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),phone:document.getElementById('regPhone').value.trim(),website:document.getElementById('regWebsite').value};
   try{
-   const response=await fetch('https://formsubmit.co/ajax/info@afabricadafelicidade.com',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
-   const result=await response.json();
-   if(!response.ok || result.success===false) throw new Error(result.message||'Não foi possível enviar.');
+   const response=await fetch('/api/inscricao',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+   let result={};try{result=await response.json();}catch(e){}
+   if(!response.ok || !result.ok) throw new Error(result.message||('Não foi possível confirmar a inscrição (HTTP '+response.status+').'));
    try{localStorage.setItem(regKey,JSON.stringify({name:payload.name,email:payload.email,phone:payload.phone,registeredAt:new Date().toISOString()}));}catch(e){}
-   status.textContent='Inscrição enviada! Bem-vinda. ❤️';
-   setTimeout(()=>{gate.style.display='none';app.style.display='block';app.scrollIntoView({behavior:'smooth'});},800);
-  }catch(err){status.textContent='O serviço não confirmou o envio. Se esta for a primeira inscrição, verifica a caixa de entrada e Spam de info@afabricadafelicidade.com para confirmar a ativação do FormSubmit. Depois tenta novamente. Se já confirmaste, tenta a partir do link público da aplicação.';btn.disabled=false;}
+   status.textContent='Inscrição confirmada. Bem-vinda à jornada!';
+   setTimeout(()=>{gate.style.display='none';app.style.display='block';app.scrollIntoView({behavior:'smooth'});},600);
+  }catch(err){status.textContent=(err && err.message)||'Erro de ligação ao serviço de inscrições. Tenta novamente.';btn.disabled=false;}
  });
 })();
 
@@ -401,7 +408,7 @@ document.getElementById("exportJournalBtn")?.addEventListener("click",exportJour
    showManualHelp();
  }));
  if('serviceWorker' in navigator && location.protocol==='https:'){
-   window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(err=>console.warn('Service worker não registado:',err)));
+   window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js', {scope:'/'}).catch(err=>{console.warn('Service worker não registado:',err);setStatus('A instalação não foi preparada pelo navegador. Confirma que estás no endereço HTTPS publicado na Vercel.');}));
  }
 })();
 
